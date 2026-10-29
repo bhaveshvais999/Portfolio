@@ -255,7 +255,7 @@
     const modalTitle = document.getElementById('modal-title');
 
     // Optional Web3Forms Access Key: Replace with your key from https://web3forms.com
-    const WEB3FORMS_ACCESS_KEY = "";
+    const WEB3FORMS_ACCESS_KEY = "8f00cf4f-25c5-4c2e-bc9d-db7b264e7805";
 
     if (contactForm) {
       contactForm.addEventListener('submit', async (e) => {
@@ -289,38 +289,55 @@ Sent via your Portfolio Website`;
         const mailtoUrl = `mailto:bhaveshvaishnav655@gmail.com?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
         openMailApp.href = mailtoUrl;
 
-        if (WEB3FORMS_ACCESS_KEY && WEB3FORMS_ACCESS_KEY.length > 5) {
-          try {
-            const res = await fetch("https://api.web3forms.com/submit", {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "Accept": "application/json" },
-              body: JSON.stringify({
-                access_key: WEB3FORMS_ACCESS_KEY,
-                name: name,
-                email: email,
-                message: message,
-                subject: emailSubject
-              })
-            });
-            const data = await res.json();
-            if (data.success) {
-              modalTitle.textContent = "Message Sent Successfully!";
-              successUserText.textContent = `Thank you, ${name}! Your message has been sent directly to Bhavesh Vaishnav (bhaveshvaishnav655@gmail.com). He will get back to you shortly.`;
-              successCard.classList.remove('hidden');
-              contactForm.reset();
-              return;
-            }
-          } catch (err) {
-            console.warn('Web3forms fallback to Gmail direct', err);
+        const submitBtn = document.getElementById('contact-submit-btn');
+        const btnText = document.getElementById('btn-text');
+        
+        // Loading state
+        submitBtn.disabled = true;
+        btnText.textContent = "Sending message...";
+        statusDiv.classList.add('hidden');
+
+        try {
+          const res = await fetch("https://api.web3forms.com/submit", {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json", 
+              "Accept": "application/json" 
+            },
+            body: JSON.stringify({
+              access_key: WEB3FORMS_ACCESS_KEY,
+              name: name,
+              email: email,
+              message: message,
+              subject: emailSubject,
+              from_name: "Portfolio Visitor: " + name
+            })
+          });
+          
+          const data = await res.json();
+          if (data.success) {
+            modalTitle.textContent = "Message Sent Successfully!";
+            successUserText.textContent = `Thank you, ${name}! Your message has been delivered directly to Bhavesh Vaishnav (bhaveshvaishnav655@gmail.com). He will review it and get back to you soon.`;
+            openGmailDirect.classList.add('hidden');
+            openMailApp.classList.add('hidden');
+            successCard.classList.remove('hidden');
+            contactForm.reset();
+            return;
+          } else {
+            throw new Error(data.message || "Failed to submit");
           }
+        } catch (err) {
+          console.warn("Web3Forms issue, using direct Gmail fallback:", err);
+          // Fallback: If offline or blocked, offer 1-click Gmail Web / App
+          modalTitle.textContent = "Message Ready to Send!";
+          successUserText.textContent = `Your message is ready. Click below to deliver it directly to Bhavesh via Gmail or your mail app:`;
+          openGmailDirect.classList.remove('hidden');
+          openMailApp.classList.remove('hidden');
+          successCard.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
+          btnText.textContent = "Send message";
         }
-
-        // 1-Click Action: Automatically open Gmail in new tab
-        window.open(gmailWebUrl, '_blank');
-
-        modalTitle.textContent = "Opening Gmail to Send...";
-        successUserText.textContent = `A Gmail compose tab has been opened with your message ready for Bhavesh Vaishnav. Just click 'Send'! If it didn't open automatically, click the button below:`;
-        successCard.classList.remove('hidden');
       });
 
       sendAnotherBtn.addEventListener('click', () => {
