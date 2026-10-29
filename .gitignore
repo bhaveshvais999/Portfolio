@@ -1,0 +1,8 @@
+git/
+cloudflared.exe
+live_url.txt
+site.html
+portfolio.zip
+run_live.py
+assemble_index.py
+*.py
